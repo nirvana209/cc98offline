@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html lang="zh-CN">
+<head>
+	<meta name="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="Referrer" content="unsafe-url" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=1" />
+	<meta content="True" name="HandheldFriendly" />
+    <meta name="theme-color" content="#333344" />
+	
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+
+    <title>{{title}} - CC98</title>
+    
+    <link rel="stylesheet" type="text/css" media="screen" href="/static/all.css?{% if app.config["DEBUG"]%}{{file_modifytime_hash("static/all.css")}}{% else %}{{CSSHASH}}{% endif %}" />
+{% if request.remote_addr.startswith("10.190") or request.remote_addr=="10.3.1.172" %}
+    <script type="text/javascript" src="/rvpn/all.js?{{JSHASH}}"></script>
+    {% if request.cookies.get("rvpnstatus","unknown")=="unknown" %}
+    <script type="text/javascript" src="/rvpn/rvpnstatus.js"></script>
+    {% endif %}
+{% else %}
+    {% if request.cookies.get("rvpnstatus","unknown")=="true" %}
+    <script type="text/javascript" src="/rvpn/all.js?{{JSHASH}}"></script>
+    {% else %}
+    <script type="text/javascript" src="/static/all.js?{% if app.config["DEBUG"]%}{{file_modifytime_hash("static/all.js")}}{% else %}{{JSHASH}}{% endif %}"></script>
+    {% endif %}
+{% endif %}
+</head>
+<body>
+   <div id="Top">
+        <div class="content">
+            <div style="padding-top: 6px;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                <tr>
+                    <td width="5"></td>
+                    <td width="100" align="left" style=""><a href="/recent" name="top"><span style="font-weight: bolder"><img style="max-height:100%;max-width:100%;" src="/static/pic/logo.gif?100x33"></span></a></td>
+                    <td width="auto" align="right" style="padding-top: 2px;"><span><a href="/hot">十大热门</a> &nbsp;</span>CC98离线版</td>
+                    <td width="5"></td>
+                </tr>
+            </table>
+            </div>
+        </div>
+    </div>
+    <div id="Wrapper">
+        <div class="content">
+{% block content %}{% endblock %}
+    <div id="Bottom">
+        <div class="content">
+            <div class="inner">
+                <div class="sep10"></div>
+                    <a href="/recent">CC98</a>离线访问版本<a href="/about">About</a> 数据时间：<span title="{{gtime(DATA["time"])}}">{{calc_howlongago(int(time.time()), DATA["time"])}}</span> <strong></strong>
+                    <p>__EXECUTION_INFO__ </p> 
+            </div>
+        </div>
+    </div>
+{% if extra_message is defined and extra_message == "script:needcheckin" %}
+<script>
+$.get("/me/checkin","",function(text){$("#extra_message").html(text);});
+</script>
+{% endif %}
+{% if ENABLE_CSRF %}
+<script type="text/javascript">
+    var csrf_token = "{{ csrf_token() }}";
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrf_token);
+            }
+        }
+    });
+</script>
+{% endif %}
+</body>
+</html>

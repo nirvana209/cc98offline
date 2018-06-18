@@ -1,0 +1,306 @@
+{% extends "layout.html" %}
+{% block content %}
+{#
+	<script>
+{% if src == "reply" %}
+purgeReplyDraft({{topic["id"]}}, 1);
+{% endif %}
+{% if src == "new" %}
+purgeComposeDraft(0);
+{% endif %}
+
+ var topicId = {{topic["id"]}};
+
+$(function(){
+    $('#reply_content').autosize().blur();
+    loadReplyDraft({{topic["id"]}}, 1);
+});
+        
+	</script>
+#}
+<div class="box">
+    <div class="header"><div class="fr"><a {{memberlink(topic["userId"])|safe}}><img style="max-width: 36px; max-height: 36px;" src="{{posts[0]["portrait"]}}" class="avatar" border="0" align="default" /></a></div>
+    <a href="/">{{BBSNAME}}</a> <span class="chevron">›</span> <a href="/go/{{boardid}}">{{boardname}}</a> 
+    <div class="sep10"></div>
+    <h1>{{posts[0]["title"]}}</h1>
+    <small class="gray">By <a {{memberlink(topic["userId"])|safe}}>{{posts[0]["userName"]}}</a> at {{posts[0]["howlongago"]}}, {{topic["hitCount"]}} 次点击 &nbsp; </small>
+ </div>
+    
+    
+    <div class="cell">
+        
+        <div class="topic_content"><div class="markdown_body" style="{%if "─" in posts[0]["content"]%}font-family:SimSun;{%endif%}{%if posts[0]['contentType']==1%}white-space:normal;{%endif%}">{{posts[0]["content"].replace("<br />"," <br />")|safe}}</div></div>
+        <textarea style="display:none"   id="post_{{posts[0]["id"]}}">{{posts[0]["content_orignal"]}}</textarea>
+        <script>hljs.initHighlightingOnLoad();</script>
+        
+    </div>
+    
+    
+    <div class="topic_buttons"><div class="fr gray f11" style="line-height: 12px; padding-top: 3px; text-shadow: 0px 1px 0px #fff;">{{topic["hitCount"]}} 次点击 &nbsp;∙&nbsp; {{topic["participantCount"]}} 人讨论 &nbsp; </div><a id="addfavoritebutton" onclick="{%if "username" in session %}addfavorite({{topic["id"]}}){% else %}asklogin(){%endif%}" class="tb">收藏主题</a><a id="favoritelistbutton" href="/me/favorite" class="tb" style="display:none">进入收藏列表</a>{% if is_privilege_user and is_edited %} <a href='/topic/{{topic["id"]}}/history_query/{{topic["boardId"]}}{% if is_deleted %}?deleted=1{% endif %}' class="tb">查询编辑历史</a>{% endif %}{#<a href="#;" onclick="if (confirm('确定不想再看到这个主题？')) { location.href = '/ignore/topic/419916?once=20785'; }" class="tb">忽略主题</a> &nbsp;<div id="topic_thank"><a href="#;" onclick="if (confirm('你确定要向本主题创建者发送谢意？')) { thankTopic(419916, 'wsnfgmppauaqqjwaytnogbvuqqfbpapr'); }" class="tb">感谢</a>#}</div></div>
+
+
+<div class="sep20"></div>
+
+
+<div class="box">
+    <div class="cell"><span class="gray">{{topic["replyCount"]}} 回复 &nbsp;<strong class="snow">|</strong> &nbsp;直到 {{topic["lastPostTime"].split(".")[0].replace("T"," ")}} &nbsp; {% if page_count>1 %}{% if page!=1 %} <a href="/topic/{{topic["id"]}}/1#2">第一页</a> <a href="/topic/{{topic["id"]}}/{{page*10-19}}#end">前一页</a> {%endif %} {% if page!=page_count %} <a href="/topic/{{topic["id"]}}/{{page*10+1}}#1">下一页</a> <a href="/topic/{{topic["id"]}}/{{page_count*10-9}}#1">最后一页</a> {%endif %}{%endif %} &nbsp;&nbsp;<a onclick='$("html, body").animate({scrollTop: document.body.scrollHeight}, 1000);'>跳至底部</a></span>
+    </div>
+    
+
+    
+        
+{% for post in posts %}
+        {% if loop.index!=1 and post.get("purequote", False)==False %}
+        {% if simplify  and post.get("quotedinfo","").__len__()%}
+                            {% for item in post["quotedinfo"] %}
+                                <a name="{{item[0] - (orignal_star-1)*10}}"></a>
+                            {% endfor %}
+         {% endif %}
+        <a name="{{post["floor"] - (orignal_star-1)*10}}"></a>
+        <div id="r_{{post["id"]}}" class="cell">
+        
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+          <tbody style="{% if loop.index %2 ==0 %}background-color:#FFFFEE{%endif%}">
+            <tr>
+                <td width="24" valign="top"><img src="{{post["portrait"]}}" class="avatar" border="0" align="default" style="max-width: 24px; max-height: 24px;"/></td>
+                <td width="10px" valign="top"></td>
+                <td width="auto" valign="top" align="left">
+                    <div class="fr">&nbsp; <a onclick="replyOne({{post["id"]}}, {{post["floor"]}}, '{{post["userName"]}}', '{{gtime(ftime(posts[0]["time"]))}}');"><img src="/static/img/reply.png" align="absmiddle" border="0" alt="Reply" /></a> &nbsp;&nbsp; <span class="no">{{post["floor"]}}</span></div>
+                    <div class="sep3"></div>
+                    <strong><a {{memberlink(post["userId"])|safe}} class="dark">{{post["userName"]}}</a>{% if post["userName"]==posts[0]["userName"] %} [楼主]{% endif %}</strong>&nbsp; &nbsp;<span class="ago">{{post["howlongago"]}}</span>  &nbsp;{% if post["likeCount"]>0 %} <span class="small thumbup_red">♥ {{post["likeCount"]}}</span> {% endif %}
+                    <div class="sep5"></div>
+                    <div class="reply_content">{{post["content"].replace("<br />"," <br />")|safe}}
+                    {%if simplify  and post.get("quotedinfo","").__len__()%}
+                        <blockquote>
+                            <a onclick="$('#quotedinfo_{{post["floor"]}}').toggle()">该楼层被 {{post["quotedinfo"][0][1]}} 等<b>{{post.get("quotedinfo","").__len__()}}</b>人引用</a>
+                            <div id="quotedinfo_{{post["floor"]}}" style="display: none">{{post["quoteddetail"]|safe}}</div>
+                        </blockquote>
+                        {% endif%}
+                    </div>
+                    <textarea style="display:none"  id="post_{{post["id"]}}">{{post["content_orignal"]}}</textarea>
+                </td>
+            </tr>
+          </tbody>
+        </table>
+        </div> {% endif %}
+{% endfor %}
+
+    
+{% if page_count > 1 %}
+<div class="inner" style="text-align: center;">
+    {% for i in range(1,page_count+1) %}
+        {% if i==page %} <span class="page_current">{{i}}</span>
+        {% else %}<a href="/topic/{{topic["id"]}}/{{ (i-1)*10+1 }}#1" class="page_normal">{{i}}</a>{% endif %}
+    {% endfor %}
+</div>
+{% endif %}
+
+</div>
+<div class="sep5"></div>
+
+<a name="end"></a>
+{#
+<script>
+function quickreply(value){
+    $("#replytarget").val("{{topic["replyCount"]+1}}");
+    var checked = $("#realquick").is(":checked");
+    $("#reply_content")[0].value+=value;
+    if(checked) {
+        $(".quickreplybutton").hide();
+        $(".quickreplyhint").show();
+        $("#replyform").submit();
+    }
+}
+function quickreply_quote(){
+    var checked = $("#realquick").is(":checked");
+    replyOne({{posts[0]["id"]}},1,"{{posts[0]["userName"]}}", "{{gtime(ftime(posts[0]["time"]))}}");
+    if(checked) {
+        $(".quickreplybutton").hide();
+        $(".quickreplyhint").show();
+        $("#replyform").submit();
+    }
+}
+function quickornot(){
+    var checked = $("#realquick").is(":checked");
+    if(checked) localStorage.setItem("realquick","1");
+    else localStorage.setItem("realquick","0");
+}
+</script>
+    
+<div class="box" id="replybox">
+    <div class="cell"><div class="fr"><a href="#" onclick="goTop()"><strong>↑</strong> 回到顶部</a></div>
+        {% if "username" in session %}以 <b>{{session["username"]}}</b> 的身份{%endif%}添加一条新回复<div id="upload_progress"></div>
+    </div>
+    <div class="cell">{% if "username" in session %}{% if topic["state"]==0 %}
+    {% if len(extra_message) %}<div class="message" onclick="$(this).slideUp('fast');">{{extra_message}}</div>{% endif %}
+    <form id="uploadForm"><input id="uploadfile" name="file" type="file"></form>
+    <form id="replyform" method="post" action="/SaveReAnnounce.asp">
+        <input type="hidden" name="RootID" value="{{topic["id"]}}">
+        <input type="hidden" name="replytarget" id="replytarget" value="-1">
+        <input type="hidden" name="parentId" id="parentId" value="0">
+        <textarea name="content" class="mll" id="reply_content"></textarea>
+        <div class="sep10"></div>
+        <div class="fr"><div class="sep5"></div><span class="gray"></span></div>
+        <input type="hidden" value="{{signit(request.referrer)}}" name="referrer" />
+        <span class="quickreplyhint" style="display: none">正在提交回复...</span>
+        <input type="submit" value="回复" class="super normal button quickreplybutton" onclick='$(".quickreplybutton").hide();$(".quickreplyhint").show();' />
+        <span class="quickreplybutton" title="选中后右侧按钮立即回复，如果来自水楼列表将自动返回列表">快速回复<input type="checkbox" name="realquick" id="realquick" onclick='quickornot();'>：</span>
+        {% for value in quickreplylist %}
+            {% if value!="打卡求米" or "水楼" in posts[0]["title"] %}
+                <input type="button" value="{{value}}" class="super normal button quickreplybutton" onclick="quickreply(this.value)"/>
+            {% endif %}
+        {% endfor %}
+        {% if not "水楼" in posts[0]["title"] %}
+        <input type="button" value="引用lz"  class="super normal button quickreplybutton" onclick="quickreply_quote()"/>
+        {% endif %}
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <script type="text/javascript">
+
+(function($){
+    $.fn.extend({
+        insertAtCaret: function(myValue){
+            var $t=$(this)[0];
+            if (document.selection) {
+                this.focus();
+                sel = document.selection.createRange();
+                sel.text = myValue;
+                this.focus();
+            }
+            else 
+                if ($t.selectionStart || $t.selectionStart == '0') {
+                    var startPos = $t.selectionStart;
+                    var endPos = $t.selectionEnd;
+                    var scrollTop = $t.scrollTop;
+                    $t.value = $t.value.substring(0, startPos) + myValue + $t.value.substring(endPos, $t.value.length);
+                    this.focus();
+                    $t.selectionStart = startPos + myValue.length;
+                    $t.selectionEnd = startPos + myValue.length;
+                    $t.scrollTop = scrollTop;
+                }
+                else {
+                    this.value += myValue;
+                    this.focus();
+                }
+        }
+    })    
+})(jQuery);
+
+function upload2upyun(uploadData){
+           $.ajax({
+                url: '//v0.api.upyun.com/raspi',
+                type: 'POST',
+                data: uploadData,
+                cache: false,
+                processData: false,
+                contentType: false,
+            }).done(function(data, textStatus) {
+                data = JSON.parse(data);
+                var tag="upload";
+                var url=data.url.toLowerCase();
+                if(url.endsWith(".jpg")||url.endsWith(".jpeg")||url.endsWith(".png")||url.endsWith(".gif")||url.endsWith(".bmp")) tag="img";
+                else if(url.endsWith(".mp4")) tag="video";
+                $("#reply_content").insertAtCaret("["+tag+"]https://raspi.b0.upaiyun.com"+data.url+"[/"+tag+"]\n");
+                $.getJSON('/upload/?'+$.param(data));
+            }).fail(function(res, textStatus, error) {
+                try {
+                    var body = JSON.parse(res.responseText);
+                    alert('error: ' + body.message);
+                } catch(e) {
+                    console.error(e);
+                }
+            });
+}
+
+    document.addEventListener('paste', function(e){
+        if(!e.clipboardData) return;
+        var items = e.clipboardData.items;
+        if (!items) return;
+        for (var i = 0; i < items.length; i++) {
+		if (items[i].type.indexOf("image") !== -1) {
+			var blob = items[i].getAsFile();
+                   $.getJSON('/policy.php?pageid={{topic["id"]}}', function (data) {
+			    var uploadData = new FormData();
+                        uploadData.append('policy', data.policy);
+                        uploadData.append('signature', data.signature);
+                        uploadData.append('file', blob, "screenshot.png");
+                        upload2upyun(uploadData);
+                        e.preventDefault();
+                    });
+		}
+	}
+    });
+
+    $('#uploadfile').on('change', function() {
+        $.getJSON('/policy.php?pageid={{topic["id"]}}', function (data) {
+            var uploadData = new FormData($('#uploadForm')[0]);
+            uploadData.append('policy', data.policy);
+            uploadData.append('signature', data.signature);
+            upload2upyun(uploadData);
+        });
+    });
+
+        $("#reply_content").on('input', function(e) {
+            saveReplyDraft({{topic["id"]}}, 1);
+        });
+
+        var keyPressed = 0;
+
+        $("#reply_content").keydown(function(e) {
+            keyPressed = keyPressed + 1;
+
+            if ((e.ctrlKey || e.metaKey) && e.which === 13) {
+                e.preventDefault();
+                $("#reply_content").parent().submit();
+            }
+        });
+        
+        var local_realquick = localStorage.getItem("realquick");
+        if(local_realquick!=null && local_realquick=="1") $("#realquick").prop("checked",true);
+        </script>
+        </form>{%else%} 帖子状态异常，不支持回复{%endif%}{% else %}<span>回复请先<a href="/signin">登录</a></span> {% endif %}
+    </div>
+    <div class="inner">
+        <div class="fr">{% if topic["id"] not in WATERLIST %}<a href="javascript: history.go({% if src == "reply" %}-2{%else%}-1{%endif%})">← 返回上一页</a>{% else %}<a href="/water">← 返回水楼列表</a>{%endif%}</div>
+        &nbsp;
+    </div>
+</div>
+    
+
+            </div>
+            
+#}
+        </div>
+        <div class="c"></div>
+        <div class="sep20"></div>
+    </div>
+
+<script>
+{#history.pushState(null, null, '/dispbbs.asp?id={{topic["id"]}}#reply{{topic["replyCount"]}}');#}
+{#
+setTimeout( function(){
+    var oldurl = location.href;
+    history.replaceState(null, null, '/dispbbs.asp?id={{topic["id"]}}#reply{{topic["replyCount"]}}');
+    history.replaceState(null, null, oldurl);
+{% if src == "reply" %}
+    $('#reply_content').focus();
+{% endif %}
+}, 5000);
+#}
+
+$(".quoteMaxHeightDiv").each(function(item){
+    $(this)[0].scrollTop = $(this)[0].scrollHeight;
+}); //auto scroll to bottom
+
+var golength = {% if src == "reply" %}-2{%else%}-1{%endif%};
+</script>
+
+{#
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  messageStyle: "none"
+});
+</script>
+
+<script type="text/javascript" src="https://cdn.bootcss.com/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_HTMLorMML&locale=zh-hans"></script>
+#}
+{% endblock %}

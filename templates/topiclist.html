@@ -1,0 +1,70 @@
+{% extends "layout.html" %}
+{% block content %}
+<div class="box">
+{#<div class="cell"><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td width="auto"><input type="button" class="super special button" value="1 条未读提醒" onclick="location.href = '/notifications';" style="margin-left: 2px; width: 100%; line-height: 20px;" /></td><td width="10"></td><td width="100" align="center"><a href="/balance" class="balance_area" style=" margin: 0px;">81 <img src="//v2ex.assets.uxengine.net/static/img/silver.png" alt="S" align="absmiddle" border="0" style="padding-bottom: 2px;" /> 45 <img src="//v2ex.assets.uxengine.net/static/img/bronze.png" alt="B" align="absmiddle" border="0" /></a></td></tr></table></div>#}
+    <div class="header">
+        <div class="fr f12"><span class="fade"></span></div>
+        <a href="/recent">{{BBSNAME}}</a> <span class="chevron">›</span> {{title_name}}  <span id="extra_message">{% if "script:" not in extra_message %}{% if extra_message.startswith("html:") %}{{extra_message.replace("html:","")|safe}}{%else%}{{extra_message}}{%endif%}{%endif%}</span>
+         {% if page >1 %}<input type="button" onclick="location.href = '?p={{page-1}}';" value="‹ 上一页" class="super normal button" />{% endif %} 
+         {% if page_max>1 %}{{page}}/{{page_max}}{%endif%}
+         {% if page < page_max %}<input type="button" onclick="location.href = '?p={{page+1}}';" value="下一页 ›" class="super normal button" />{% endif %}
+         {% if request.endpoint=="boardlist" %}<input type="button" style="float:right" onclick="location.href = '/board/{{boardid}}/new';" value="发新帖"  class="super normal button" />{%endif%}
+    </div>
+{% for topic in topics %}
+<script>
+    var title_{{topic["id"]}}="{{topic["title"]}}";
+</script>
+<div class="cell item">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+        <tr>
+            
+            <td width="24" valign="top" align="center"><a href="/dispbbs.asp?id={{topic["id"]}}&star=666666#end"><img src="{{userinfos[topic["userId"]]["portraitUrl"]}}" class="avatar" border="0" align="default" style="max-width: 24px; max-height: 24px;" /></a></td>
+            <td width="10"></td>
+            
+            <td width="auto" valign="middle"><input style="display:none" value="{{topic['id']}}"></input>
+                <span class="small fade">
+                    <a class="node" href="/go/{{topic["boardId"]}}">{{getboardname(topic["boardId"], _abort=False)}}</a> 
+                    {% if topic.get("state",0)!=0 %}&nbsp;<span style="background-color: gray; font-size: 12px; line-height: 12px; display: inline-block; padding: 4px 4px 4px 4px; -moz-border-radius: 2px; -webkit-border-radius: 2px; border-radius: 2px; text-decoration: none; color: white;">状态异常</span> {% endif %} 
+                    &nbsp;•&nbsp; 
+                    <strong><a {{memberlink(topic["userId"])|safe}}>{{topic["userName"]}}</a></strong>
+                    &nbsp; {#标签区域 离线版不包含本功能#}
+                    <span id="tags_{{topic['id']}}"></span>
+                </span>
+                <div class="sep5"></div>
+                <span class="item_title">{#这里是标题#}
+                    <a href="{{topic.get("openurl","/dispbbs.asp?id="+str(topic["id"])+"#reply"+str(topic["replyCount"]) )}}" onmouseover="topic_onmouseover(this, event, '{{topic["id"]}}', title_{{topic["id"]}})">{{topic["title"]}}</a>
+                </span>
+                <div class="sep5"></div>
+                <span class="small fade" onclick="topic_onmouseover(this, event, '{{topic["id"]}}', title_{{topic["id"]}})" ondblclick="topic_onmouseover(this, event, '{{topic["id"]}}', title_{{topic["id"]}})">{{topic["howlongago"]}} &nbsp;•&nbsp; <span title="{{topic["lastPostContent"]}}">最后回复</span> <strong><a {% if topic["lastPostUser"]!="匿名"%}href="/user/name/{{topic["lastPostUser"]}}" {% endif %}>{{topic["lastPostUser"]}}</a></strong> {{topic.get("howlongago2","")}}</span>{%block extrabutton%}{%endblock%}
+            </td>
+            <td width="70" align="right" valign="middle">
+                
+                {% if topic.get("replyCount_show", topic["replyCount"])>0 %}<a href="/dispbbs.asp?id={{topic["id"]}}#reply{{topic["replyCount"]}}" class="count_livid" >{{topic.get("replyCount_show", topic["replyCount"])}}</a>{% endif %}
+                
+            </td>
+        </tr>
+    </table>
+</div>
+{% endfor %}
+
+    <div class="inner">
+        <table cellpadding="0" cellspacing="0" border="0" width="100%">
+            <tr>
+                {% if page >1 %}<td width="120" align="left"><input type="button" onclick="location.href = '?p={{page-1}}';" value="‹ 上一页" class="super normal button" /></td>{% endif %}
+                <td width="auto" align="center"><strong class="fade">{{page}}/{{page_max}}</strong></td>
+                {% if page < page_max %}<td width="120" align="right"><input type="button" onclick="location.href = '?p={{page+1}}';" value="下一页 ›" class="super normal button" /></td>{% endif %}
+            </tr>
+        </table>
+    </div>
+</div>
+
+        </div>
+    </div>
+{% if src == "reply" %}
+<script>
+purgeReplyDraft({{src_id}}, 1);
+history.replaceState(null, null, location.pathname); {#扔掉所有参数 TODO: 只扔掉src和src_id#}
+</script>
+{% endif %}
+
+{% endblock %}
