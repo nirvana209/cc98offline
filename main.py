@@ -1,7 +1,7 @@
 # encoding: utf-8
 import sys
-reload(sys)  # Reload does the trick!
-sys.setdefaultencoding('UTF8')
+#reload(sys)  # Reload does the trick!
+#sys.setdefaultencoding('UTF8')
 import time
 import datetime
 from flask import Flask, render_template, Blueprint, request, redirect, Markup, g, session, abort, Response, jsonify
@@ -36,8 +36,9 @@ from render import render_dispbbs, render_onmouseover, render_topiclist
 from data import aboutmd, HTTPS_LIST, boardInfo
 
 DATA = pickle.loads(gzip.open("test.status","rb").read())
+assert DATA["version"]>=20181023, "data file version mismatch"
 DATA["topic"] = {}
-for topic in DATA["topics"]:
+for topic in DATA["topics"]+DATA["hot"]:
     DATA["topic"][topic["id"]] = topic
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -218,19 +219,6 @@ def boardlist(boardid):
     targs = globals()
     targs.update(locals())
     return render_template("topiclist.html", **targs)
-
-
-@app.route("/hot")
-def hot():
-    title = "热门话题"
-    if g.refresh:
-        topics = api_wo.topic_hot()
-    else:
-        topics = api.topic_hot()
-    topics,userids,userinfos = handletopics(topics, ishot=True)
-    targs = globals()
-    targs.update(locals())
-    return render_template("hot.html", **targs)
 """
 import copy
 def dispbbs_real(id, page=None, src=None, orignal_star=None, _useapiwo = True):
@@ -328,6 +316,14 @@ def about():
     targs.update(locals())
     return render_template("about.html", **targs)
 
+@app.route("/hot")
+def hot():
+    title = "热门话题"
+    topics = copy.deepcopy(DATA["hot"])
+    topics,userids,userinfos = handletopics(topics)
+    targs = globals()
+    targs.update(locals())
+    return render_template("hot.html", **targs)
 
 if __name__=="__main__":
     app.run('0.0.0.0',port=6000, debug=True)
