@@ -36,10 +36,18 @@ from render import render_dispbbs, render_onmouseover, render_topiclist
 from data import aboutmd, HTTPS_LIST, boardInfo
 
 DATA = pickle.loads(gzip.open("test.status","rb").read())
-assert DATA["version"]>=20181023, "data file version mismatch"
+assert DATA["version"].split(".")[0]=="2", "data file version mismatch"
 DATA["topic"] = {}
 for topic in DATA["topics"]+DATA["hot"]:
     DATA["topic"][topic["id"]] = topic
+
+def post_convert_list2dict(l):
+    return dict(zip(['allowedViewers', 'awardInfo', 'awards', 'boardId', 'content', 'contentType', 'dislikeCount', 'floor', 'id', 'ip', 'isAllowedOnly', 'isAnonymous', 'isBest', 'isDeleted', 'isLZ', 'lastUpdateAuthor', 'lastUpdateTime', 'length', 'likeCount', 'likeState', 'parentId', 'state', 'time', 'title', 'topicId', 'userId', 'userName'], l))
+
+def decompress_posts(_posts):
+    return {topicid: [post_convert_list2dict(post) for post in posts] for topicid,posts in _posts.items()}
+
+DATA["posts"] = decompress_posts(DATA["posts"])
 
 APP_ROOT = os.path.dirname(os.path.abspath(__file__))
 
