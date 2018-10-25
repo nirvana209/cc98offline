@@ -1,11 +1,8 @@
 # encoding: utf-8
 import sys
-#reload(sys)  # Reload does the trick!
-#sys.setdefaultencoding('UTF8')
 import time
 import datetime
 from flask import Flask, render_template, Blueprint, request, redirect, Markup, g, session, abort, Response, jsonify
-import msgpack
 import random
 import bbcode
 import pickle
@@ -29,7 +26,6 @@ except:
     def bytes(i, encoding="utf-8"):
         return i
 import base64
-from flask.sessions import session_json_serializer
 from itsdangerous import base64_decode
 from helper import ftime, gtime, htime, htime2, check_purequote, fixcontent_before, fixcontent_after, calc_howlongago, getportrait, portrait_nocc98, memberlink, noquote
 from render import render_dispbbs, render_onmouseover, render_topiclist
@@ -78,14 +74,6 @@ def before_request():
     g.redis_read = 0
     g.redis_write = 0
     g.apifetch = 0
-    if request.cookies.get("rvpnstatus","unknown")=="true": # request.remote_addr.startswith("10.190") and
-        g.rvpn = True
-    else:
-        g.rvpn = False
-    if request.referrer is not None and request.path in request.referrer:
-        g.refresh = True
-    else:
-        g.refresh = False
 
 @app.after_request
 def after_request(response):
